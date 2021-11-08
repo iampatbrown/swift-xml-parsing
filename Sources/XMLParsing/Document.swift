@@ -161,6 +161,9 @@ let isStandalone = OneOf {
 }
 
 let documentContent = Many(into: [Document.Content]()) {
+  guard let content = $1 else { return }
+  $0.append(content)
+} forEach: {
   OneOf {
     comment
       .map { Document.Content?.some(.comment($0)) }
@@ -170,6 +173,4 @@ let documentContent = Many(into: [Document.Content]()) {
       atLeastOneWhiteSpace
     }.map { Document.Content?.none }
   }
-} do: {
-  if let content = $1 { $0.append(content) }
 }
