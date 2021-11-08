@@ -56,12 +56,12 @@ let document = Parse {
   documentContent
   element
   documentContent
-}.map { xmlDeclaration, leadingContent1, docTypeDecl, leadingContent2, element, trailingContent in
+}.map { xmlDeclaration, leadingContent1, declaration, leadingContent2, element, trailingContent in
   Document(
     version: xmlDeclaration?.version,
     characterEncoding: xmlDeclaration?.characterEncoding,
     isStandalone: xmlDeclaration?.isStandalone ?? true,
-    declaration: nil,
+    declaration: declaration,
     leadingContent: leadingContent1 + leadingContent2,
     root: element,
     trailingContent: trailingContent
@@ -160,31 +160,16 @@ let isStandalone = OneOf {
   "no".utf8.map { false }
 }
 
-enum ParsedDocumentContent {
-  case comment(Comment)
-  case processingInstruction(ProcessingInstruction)
-  case whiteSpace
-}
-
 let documentContent = Many(into: [Document.Content]()) {
-  parsedDocumentContent
-} do: { documentContent, content in
-  switch content {
-  case let .comment(comment):
-    documentContent.append(.comment(comment))
-  case let .processingInstruction(processingInstruction):
-    documentContent.append(.processingInstruction(processingInstruction))
-  case .whiteSpace:
-    break
+  OneOf {
+    comment
+      .map { Document.Content?.some(.comment($0)) }
+    processingInstruction
+      .map { Document.Content?.some(.processingInstruction($0)) }
+    Skip {
+      atLeastOneWhiteSpace
+    }.map { Document.Content?.none }
   }
-}
-
-let parsedDocumentContent = OneOf {
-  comment
-    .map(ParsedDocumentContent.comment)
-  processingInstruction
-    .map(ParsedDocumentContent.processingInstruction)
-  Skip {
-    atLeastOneWhiteSpace
-  }.map { ParsedDocumentContent.whiteSpace }
+} do: {
+  if let content = $1 { $0.append(content) }
 }

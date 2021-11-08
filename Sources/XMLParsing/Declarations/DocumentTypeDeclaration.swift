@@ -50,7 +50,7 @@ let documentTypeDeclaration = Parse {
     }
   }
   ">".utf8
-}
+}.map(DocumentTypeDeclaration.init)
 
 let internalDeclaration = OneOf {
   elementDeclaration.map(DocumentTypeDeclaration.InternalDeclaration.element)
