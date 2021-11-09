@@ -82,7 +82,8 @@ func utf8DecodingPrefix(
 
 func utf8DecodingPrefix(
   while predicate: @escaping (UnicodeScalar) -> Bool,
-  orUpTo possibleMatch: String.UTF8View
+  orUpTo possibleMatch: String.UTF8View,
+  trimmingWhiteSpace: Bool = false
 ) -> AnyParser<Substring.UTF8View, String> {
   AnyParser { input in
     let original = input
@@ -100,9 +101,29 @@ func utf8DecodingPrefix(
       }
     }
     defer { input.removeFirst(count) }
-    return String(decoding: original.prefix(count), as: UTF8.self)
+    let output = original.prefix(count)
+    guard trimmingWhiteSpace else { return String(decoding: output, as: UTF8.self) }
+    // TODO: fix this.... maybe that's why I shouldn't return a string here....
+    let startIndex = output.firstIndex(where: { (byte: UTF8.CodeUnit) in
+      byte != .init(ascii: " ")
+        && byte != .init(ascii: "\n")
+        && byte != .init(ascii: "\r")
+        && byte != .init(ascii: "\t")
+    }) ?? output.startIndex
+
+    let endIndex = output.lastIndex(where: { (byte: UTF8.CodeUnit) in
+      byte != .init(ascii: " ")
+        && byte != .init(ascii: "\n")
+        && byte != .init(ascii: "\r")
+        && byte != .init(ascii: "\t")
+    }).map { output.index($0, offsetBy: 1) } ?? output.endIndex
+    return String(decoding: output[startIndex..<endIndex], as: UTF8.self)
+
+
   }
 }
+
+
 
 func quotedLiteral(
   _ isLiteral: @escaping (UnicodeScalar) -> Bool = { _ in true }

@@ -84,6 +84,11 @@ let emptyElement = OneOf {
   }.compactMap { startTag, endTagName in
     startTag.name == endTagName ? startTag : nil
   }
+//  }.flatMap { startTag, endTagName in
+//    if startTag.name == endTagName {
+//      Always(Element(name: startTag.name, attributes: startTag.attributes))
+//    }
+//  }
 }.map { Element(name: $0.name, attributes: $0.attributes) }
 
 let startTag = Parse {
@@ -129,8 +134,8 @@ let attribute = Parse {
 }.map(Attribute.init)
 
 let string = Parse {
-  utf8DecodingPrefix(while: isStringCharacter, orUpTo: "]]>".utf8)
-    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+  utf8DecodingPrefix(while: isStringCharacter, orUpTo: "]]>".utf8, trimmingWhiteSpace: true)
+//    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     .filter { !$0.isEmpty } // TODO: Double check this...
 
 }
