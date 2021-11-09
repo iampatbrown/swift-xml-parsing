@@ -128,8 +128,12 @@ let attribute = Parse {
   attributeValue
 }.map(Attribute.init)
 
-let string = utf8DecodingPrefix(while: isStringCharacter, orUpTo: "]]>".utf8)
-  .filter { !$0.isEmpty } // TODO: Double check this...
+let string = Parse {
+  utf8DecodingPrefix(while: isStringCharacter, orUpTo: "]]>".utf8)
+    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    .filter { !$0.isEmpty } // TODO: Double check this...
+
+}
 
 func isStringCharacter(_ s: UnicodeScalar) -> Bool {
   s != "<" && s != "&"

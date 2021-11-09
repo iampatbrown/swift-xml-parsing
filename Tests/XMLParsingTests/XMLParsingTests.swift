@@ -67,4 +67,40 @@ final class XMLParsingTests: XCTestCase {
     let document = Document.parser().parse(input)
     XCTAssertEqual(book, document?.root)
   }
+
+  func testSVG() {
+    let input = #"""
+    <svg height="100" width="100">
+      <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+      Sorry, your browser does not support inline SVG.
+    </svg>
+    """#
+
+    let svg = Element(
+      name: "svg",
+      attributes: [
+        .init(name: "height", value: "100"),
+        .init(name: "width", value: "100"),
+      ],
+      content: [
+        .element(
+          .init(
+            name: "circle",
+            attributes: [
+              .init(name: "cx", value: "50"),
+              .init(name: "cy", value: "50"),
+              .init(name: "r", value: "40"),
+              .init(name: "stroke", value: "black"),
+              .init(name: "stroke-width", value: "3"),
+              .init(name: "fill", value: "red"),
+            ]
+          )
+        ),
+        .string("Sorry, your browser does not support inline SVG."),
+      ]
+    )
+
+    let document = Document.parser().parse(input)
+    XCTAssertEqual(svg, document?.root)
+  }
 }
