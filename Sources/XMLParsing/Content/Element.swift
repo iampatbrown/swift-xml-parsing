@@ -1,5 +1,6 @@
 import Parsing
 
+@dynamicMemberLookup // Temp
 public struct Element: Equatable {
   public var name: String
   public var attributes: [Attribute] = []
@@ -137,9 +138,80 @@ let string = Parse {
   utf8DecodingPrefix(while: isStringCharacter, orUpTo: "]]>".utf8, trimmingWhiteSpace: true)
 //    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     .filter { !$0.isEmpty } // TODO: Double check this...
-
 }
 
 func isStringCharacter(_ s: UnicodeScalar) -> Bool {
   s != "<" && s != "&"
+}
+
+public struct MapElement<Output>: Parser {
+  public let name: String
+  public let transform: (Element) -> Output
+
+  public init(named name: String, _ transform: @escaping (Element) -> Output) {
+    self.name = name
+    self.transform = transform
+  }
+
+  public func parse(_ input: inout Substring.UTF8View) -> Output? {
+    let original = input
+    guard let element = element.parse(&input), element.name == name else {
+      input = original
+      return nil
+    }
+    return self.transform(element)
+  }
+}
+
+public struct SkipUpToElement: Parser {
+  public let name: String
+
+  public init(named name: String) {
+    self.name = name
+  }
+
+  public func parse(_ input: inout Substring.UTF8View) -> Void? {
+    let original = input
+    let prefix = PrefixUpTo(("<" + name).utf8)
+    while prefix.parse(&input) != nil {
+      if let element = element.parse(input), element.name == name {
+        return ()
+      }
+      input.removeFirst()
+    }
+    input = original
+    return nil
+  }
+}
+
+
+
+// Temp
+extension Attribute {
+  var string: String {
+    self.value.rawValue.map {
+      if case let .string(s) = $0 { return s } else { return "" }
+    }.joined()
+  }
+}
+
+
+extension Element {
+  var string: String {
+    self.content.map {
+      if case let .string(s) = $0 { return s } else { return "" }
+    }.joined()
+  }
+
+  public subscript(dynamicMember member: String) -> String {
+    if let attribute = self.attributes.first(where: { $0.name == member }) {
+      return attribute.string
+    }
+    for content in self.content {
+      if case let .element(element) = content, element.name == member {
+        return element.string
+      }
+    }
+    return ""
+  }
 }

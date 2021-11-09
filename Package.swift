@@ -14,7 +14,7 @@ let package = Package(
   dependencies: [
     .package(name: "Benchmark", url: "https://github.com/google/swift-benchmark", from: "0.1.1"),
     .package(url: "https://github.com/pointfreeco/swift-parsing", .branch("parser-builder")),
-    .package(url: "https://github.com/MaxDesiatov/XMLCoder.git", from: "0.13.0")
+    .package(url: "https://github.com/MaxDesiatov/XMLCoder.git", from: "0.13.0"),
   ],
   targets: [
     .target(
@@ -25,7 +25,10 @@ let package = Package(
     ),
     .testTarget(
       name: "XMLParsingTests",
-      dependencies: ["XMLParsing"]
+      dependencies: [
+        "XMLParsing",
+        .product(name: "Parsing", package: "swift-parsing"),
+      ]
     ),
     .executableTarget(
       name: "swift-xml-parsing-benchmark",

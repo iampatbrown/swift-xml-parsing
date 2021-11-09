@@ -1,3 +1,4 @@
+import Parsing
 import XCTest
 import XMLParsing
 
@@ -102,5 +103,85 @@ final class XMLParsingTests: XCTestCase {
 
     let document = Document.parser().parse(input)
     XCTAssertEqual(svg, document?.root)
+  }
+
+  func testMapElement() {
+    let input = #"""
+    <note>
+    <to>Tove</to>
+    <from>Jani</from>
+    <heading>Reminder</heading>
+    <body>Don't forget me this weekend!</body>
+    </note>
+    """#
+
+    struct Note: Equatable {
+      var to: String
+      var from: String
+      var heading: String
+      var body: String
+    }
+
+    let noteParser = MapElement(named: "note") {
+      Note(
+        to: $0.to,
+        from: $0.from,
+        heading: $0.heading,
+        body: $0.body
+      )
+    }
+
+    let note = Note(
+      to: "Tove",
+      from: "Jani",
+      heading: "Reminder",
+      body: "Don't forget me this weekend!"
+    )
+
+    let output = noteParser.parse(input)
+    XCTAssertEqual(note, output)
+  }
+
+  func testSkipUpToElement() {
+    var input = #"""
+    <head/>
+    <note>
+    <to>Tove</to>
+    <from>Jani</from>
+    <heading>Reminder</heading>
+    <body>Don't forget me this weekend!</body>
+    </note>
+    <tail/>
+    """#[...].utf8
+
+    struct Note: Equatable {
+      var to: String
+      var from: String
+      var heading: String
+      var body: String
+    }
+
+    let noteParser = Parse {
+      SkipUpToElement(named: "note")
+      MapElement(named: "note") {
+        Note(
+          to: $0.to,
+          from: $0.from,
+          heading: $0.heading,
+          body: $0.body
+        )
+      }
+    }
+
+    let note = Note(
+      to: "Tove",
+      from: "Jani",
+      heading: "Reminder",
+      body: "Don't forget me this weekend!"
+    )
+
+    let output = noteParser.parse(&input)
+    XCTAssertEqual(note, output)
+    XCTAssertTrue(input.starts(with: "\n<tail/>".utf8))
   }
 }
