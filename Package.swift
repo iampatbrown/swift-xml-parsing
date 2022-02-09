@@ -13,7 +13,7 @@ let package = Package(
   ],
   dependencies: [
     .package(name: "Benchmark", url: "https://github.com/google/swift-benchmark", from: "0.1.1"),
-    .package(url: "https://github.com/pointfreeco/swift-parsing", .branch("parser-builder")),
+    .package(url: "https://github.com/pointfreeco/swift-parsing", .branch("printer-throws-2")),
     .package(url: "https://github.com/MaxDesiatov/XMLCoder.git", from: "0.13.0"),
   ],
   targets: [
