@@ -1,8 +1,9 @@
-//import Parsing
-//
-//public struct SystemLiteral: Equatable {
-//  var rawValue: String
-//}
-//
-//let systemLiteral = quotedLiteral()
-//  .map(SystemLiteral.init)
+import Parsing
+
+public struct SystemLiteral: Equatable {
+  var rawValue: String
+}
+
+let systemLiteral = QuotedLiteral().map(toSystemLiteral)
+
+private let toSystemLiteral = Conversions.struct(SystemLiteral.init)

@@ -43,88 +43,88 @@ import Parsing
 //  }
 // }
 //
+//
+// func utf8DecodingPrefix(
+//  minLength: Int = 0,
+//  maxLength: Int = .max,
+//  while predicate: @escaping (UnicodeScalar) -> Bool
+// ) -> AnyParser<Substring.UTF8View, String> {
+//  AnyParser { input in
+//    var utf8Decoder = Unicode.UTF8()
+//    var bytesIterator = input.makeIterator()
+//    var count = 0
+//    var length = 0
+//
+//    Decode: while length < maxLength {
+//      switch utf8Decoder.decode(&bytesIterator) {
+//      case let .scalarValue(scalar) where predicate(scalar):
+//        count += UTF8.width(scalar)
+//        length += 1
+//      default:
+//        break Decode
+//      }
+//    }
+//
+//    guard length >= minLength else { throw NSError() }
+//    defer { input.removeFirst(count) }
+//    return String(decoding: input.prefix(count), as: UTF8.self)
+//  }
+// }
 
-func utf8DecodingPrefix(
-  minLength: Int = 0,
-  maxLength: Int = .max,
-  while predicate: @escaping (UnicodeScalar) -> Bool
-) -> AnyParser<Substring.UTF8View, String> {
-  AnyParser { input in
-    var utf8Decoder = Unicode.UTF8()
-    var bytesIterator = input.makeIterator()
-    var count = 0
-    var length = 0
-
-    Decode: while length < maxLength {
-      switch utf8Decoder.decode(&bytesIterator) {
-      case let .scalarValue(scalar) where predicate(scalar):
-        count += UTF8.width(scalar)
-        length += 1
-      default:
-        break Decode
-      }
-    }
-
-    guard length >= minLength else { throw NSError() }
-    defer { input.removeFirst(count) }
-    return String(decoding: input.prefix(count), as: UTF8.self)
-  }
-}
-
-func utf8DecodingPrefix(
-  _ length: Int,
-  while predicate: @escaping (UnicodeScalar) -> Bool
-) -> AnyParser<Substring.UTF8View, String> {
-  utf8DecodingPrefix(minLength: length, maxLength: length, while: predicate)
-}
-
-func utf8DecodingPrefix(
-  _ range: PartialRangeFrom<Int>,
-  while predicate: @escaping (UnicodeScalar) -> Bool
-) -> AnyParser<Substring.UTF8View, String> {
-  utf8DecodingPrefix(minLength: range.lowerBound, maxLength: .max, while: predicate)
-}
-
-func utf8DecodingPrefix(
-  while predicate: @escaping (UnicodeScalar) -> Bool,
-  orUpTo possibleMatch: String.UTF8View,
-  trimmingWhiteSpace: Bool = false
-) -> AnyParser<Substring.UTF8View, String> {
-  AnyParser { input in
-    let original = input
-
-    var utf8Decoder = Unicode.UTF8()
-    var bytesIterator = input.makeIterator()
-    var count = 0
-
-    Decode: while !bytesIterator.starts(with: possibleMatch) {
-      switch utf8Decoder.decode(&bytesIterator) {
-      case let .scalarValue(scalar) where predicate(scalar):
-        count += UTF8.width(scalar)
-      default:
-        break Decode
-      }
-    }
-    defer { input.removeFirst(count) }
-    let output = original.prefix(count)
-    guard trimmingWhiteSpace else { return String(decoding: output, as: UTF8.self) }
-    // TODO: fix this.... maybe that's why I shouldn't return a string here....
-    let startIndex = output.firstIndex(where: { (byte: UTF8.CodeUnit) in
-      byte != .init(ascii: " ")
-        && byte != .init(ascii: "\n")
-        && byte != .init(ascii: "\r")
-        && byte != .init(ascii: "\t")
-    }) ?? output.startIndex
-
-    let endIndex = output.lastIndex(where: { (byte: UTF8.CodeUnit) in
-      byte != .init(ascii: " ")
-        && byte != .init(ascii: "\n")
-        && byte != .init(ascii: "\r")
-        && byte != .init(ascii: "\t")
-    }).map { output.index($0, offsetBy: 1) } ?? output.endIndex
-    return String(decoding: output[startIndex..<endIndex], as: UTF8.self)
-  }
-}
+// func utf8DecodingPrefix(
+//  _ length: Int,
+//  while predicate: @escaping (UnicodeScalar) -> Bool
+// ) -> AnyParser<Substring.UTF8View, String> {
+//  utf8DecodingPrefix(minLength: length, maxLength: length, while: predicate)
+// }
+//
+// func utf8DecodingPrefix(
+//  _ range: PartialRangeFrom<Int>,
+//  while predicate: @escaping (UnicodeScalar) -> Bool
+// ) -> AnyParser<Substring.UTF8View, String> {
+//  utf8DecodingPrefix(minLength: range.lowerBound, maxLength: .max, while: predicate)
+// }
+//
+// func utf8DecodingPrefix(
+//  while predicate: @escaping (UnicodeScalar) -> Bool,
+//  orUpTo possibleMatch: String.UTF8View,
+//  trimmingWhiteSpace: Bool = false
+// ) -> AnyParser<Substring.UTF8View, String> {
+//  AnyParser { input in
+//    let original = input
+//
+//    var utf8Decoder = Unicode.UTF8()
+//    var bytesIterator = input.makeIterator()
+//    var count = 0
+//
+//    Decode: while !bytesIterator.starts(with: possibleMatch) {
+//      switch utf8Decoder.decode(&bytesIterator) {
+//      case let .scalarValue(scalar) where predicate(scalar):
+//        count += UTF8.width(scalar)
+//      default:
+//        break Decode
+//      }
+//    }
+//    defer { input.removeFirst(count) }
+//    let output = original.prefix(count)
+//    guard trimmingWhiteSpace else { return String(decoding: output, as: UTF8.self) }
+//    // TODO: fix this.... maybe that's why I shouldn't return a string here....
+//    let startIndex = output.firstIndex(where: { (byte: UTF8.CodeUnit) in
+//      byte != .init(ascii: " ")
+//        && byte != .init(ascii: "\n")
+//        && byte != .init(ascii: "\r")
+//        && byte != .init(ascii: "\t")
+//    }) ?? output.startIndex
+//
+//    let endIndex = output.lastIndex(where: { (byte: UTF8.CodeUnit) in
+//      byte != .init(ascii: " ")
+//        && byte != .init(ascii: "\n")
+//        && byte != .init(ascii: "\r")
+//        && byte != .init(ascii: "\t")
+//    }).map { output.index($0, offsetBy: 1) } ?? output.endIndex
+//    return String(decoding: output[startIndex..<endIndex], as: UTF8.self)
+//  }
+// }
 
 //
 //

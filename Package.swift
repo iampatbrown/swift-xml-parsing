@@ -21,7 +21,17 @@ let package = Package(
       name: "XMLParsing",
       dependencies: [
         .product(name: "Parsing", package: "swift-parsing"),
+      ],
+      swiftSettings: [
+        .unsafeFlags(
+          [
+//            "-Xfrontend", "-warn-long-expression-type-checking=50",
+            "-Xfrontend", "-warn-long-function-bodies=150",
+          ],
+          .when(configuration: .debug)
+        ),
       ]
+
     ),
     .testTarget(
       name: "XMLParsingTests",

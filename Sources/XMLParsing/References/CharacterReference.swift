@@ -1,30 +1,45 @@
-//import Parsing
-//
-//public enum CharacterReference: Equatable {
-//  case decimal(UnicodeScalar)
-//  case hex(UnicodeScalar)
-//}
-//
-//// TODO: Double check older implementation
-//let characterReference = AnyParser<Substring.UTF8View, CharacterReference> { input in
-//  guard input.starts(with: "&#".utf8) else { return nil }
-//  let original = input
-//  let radix: UInt32
-//  if input.dropFirst(2).starts(with: "x".utf8) {
-//    radix = 16
-//    input.removeFirst(3)
-//  } else {
-//    radix = 10
-//    input.removeFirst(2)
-//  }
-//
-//  guard
-//    let value = UInt32.parser(isSigned: false, radix: radix).parse(&input),
-//    let scalar = UnicodeScalar(value),
-//    input.starts(with: ";".utf8)
-//  else {
-//    input = original
-//    return nil
-//  }
-//  return radix == 16 ? .hex(scalar) : .decimal(scalar)
-//}
+import Parsing
+
+public enum CharacterReference: Equatable, CustomStringConvertible {
+  case decimal(UnicodeScalar)
+  case hex(UnicodeScalar)
+
+  public var description: String {
+    switch self {
+    case let .decimal(unicodeScalar):
+      return "&#\(String(unicodeScalar.value, radix: 10));"
+    case let .hex(unicodeScalar):
+      return "&#\(String(unicodeScalar.value, radix: 16));"
+    }
+  }
+}
+
+// TODO: Compare performance to ParserBuilder implementation
+struct CharacterReferenceParser: ParserPrinter {
+  func parse(_ input: inout Substring.UTF8View) throws -> CharacterReference {
+    guard input.starts(with: "&#".utf8)
+    else { throw ParsingError.failed() }
+
+    let radix: Int
+    if input.dropFirst(2).starts(with: "x".utf8) {
+      radix = 16
+      input.removeFirst(3)
+    } else {
+      radix = 10
+      input.removeFirst(2)
+    }
+
+    let parser = Parsers.IntParser<Substring.UTF8View, UInt32>.init(isSigned: false, radix: radix)
+
+    guard
+      let value = try? parser.parse(&input),
+      let scalar = UnicodeScalar(value),
+      input.starts(with: ";".utf8)
+    else { throw ParsingError.failed() }
+    return radix == 16 ? .hex(scalar) : .decimal(scalar)
+  }
+
+  func print(_ output: CharacterReference, to input: inout Substring.UTF8View) {
+    input.append(contentsOf: output.description.utf8)
+  }
+}

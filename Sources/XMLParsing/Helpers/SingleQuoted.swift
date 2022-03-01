@@ -1,27 +1,23 @@
 import Parsing
 
 struct SingleQuoted<Content: Parser>: Parser
-  where
-  Content.Input: Collection,
-  Content.Input.SubSequence == Content.Input,
-  Content.Input.Element == UTF8.CodeUnit
-{
-  let parser: Delimited<Content, StartsWith<Content.Input>, StartsWith<Content.Input>>
+where Content.Input == Substring.UTF8View {
+  let parser: Delimited<Content, StartsWith<Substring.UTF8View>, StartsWith<Substring.UTF8View>>
 
   init(@ParserBuilder _ content: () -> Content) {
     self.parser = .init(
       content: content,
-      delimiter: { StartsWith<Content.Input>("'".utf8) }
+      delimiter: { StartsWith<Substring.UTF8View>([39] /* "'".utf8 */ ) }
     )
   }
 
-  func parse(_ input: inout Content.Input) rethrows -> Content.Output {
+  func parse(_ input: inout Substring.UTF8View) rethrows -> Content.Output {
     try self.parser.parse(&input)
   }
 }
 
-extension SingleQuoted: Printer where Content: Printer, Content.Input: AppendableCollection {
-  func print(_ output: Content.Output, to input: inout Content.Input) rethrows {
+extension SingleQuoted: Printer where Content: Printer {
+  func print(_ output: Content.Output, to input: inout Substring.UTF8View) rethrows {
     try self.parser.print(output, to: &input)
   }
 }

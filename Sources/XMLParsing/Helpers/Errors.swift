@@ -7,3 +7,8 @@ enum ParsingError: Error {
 enum PrintingError: Error {
   case failed(String = "printing failed")
 }
+
+@usableFromInline
+enum ConvertingError: Error {
+  case failed(String = "printing failed")
+}
